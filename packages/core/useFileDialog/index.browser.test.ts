@@ -39,6 +39,20 @@ describe('useFileDialog', () => {
     expect(files.value).toBeNull()
   })
 
+  it('notifies listeners when reset clears initial files', () => {
+    const { files, onChange, reset } = useFileDialog({ initialFiles: [file1] })
+    const changeHandler = vi.fn()
+    onChange(changeHandler)
+
+    reset()
+
+    expect(files.value).toBeNull()
+    expect(changeHandler).toHaveBeenCalledExactlyOnceWith(null)
+
+    reset()
+    expect(changeHandler).toHaveBeenCalledTimes(1)
+  })
+
   it('should work with custom input element', () => {
     const input = document.createElement('input')
     input.click = vi.fn()

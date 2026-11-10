@@ -109,11 +109,13 @@ export function useFileDialog(options: UseFileDialogOptions = {}): UseFileDialog
   })
 
   const reset = () => {
+    const input = inputRef.value
+    const changed = files.value !== null || Boolean(input?.value)
     files.value = null
-    if (inputRef.value && inputRef.value.value) {
-      inputRef.value.value = ''
+    if (input?.value)
+      input.value = ''
+    if (changed)
       changeTrigger(null)
-    }
   }
 
   const applyOptions = (options: UseFileDialogOptions) => {
