@@ -59,13 +59,15 @@ export function useIdle(
     listenForVisibilityChange = true,
     events = defaultEvents,
     window = defaultWindow,
-    eventFilter = throttleFilter(50),
+    eventFilter,
   } = options
   const idle = shallowRef(initialState)
   const lastActive = shallowRef(timestamp())
   const isPending = shallowRef(false)
 
   let timer: TimerHandle
+  let generation = 0
+  let onEvent: () => Promise<void>
 
   const reset = (resetLastActive = false) => {
     if (resetLastActive)
@@ -74,11 +76,6 @@ export function useIdle(
     clearTimeout(timer)
     timer = setTimeout(() => idle.value = true, timeout)
   }
-
-  const onEvent = createFilterWrapper(
-    eventFilter,
-    () => reset(true),
-  )
 
   if (window) {
     const document = window.document
@@ -107,6 +104,11 @@ export function useIdle(
     if (isPending.value) {
       return
     }
+    const eventGeneration = ++generation
+    onEvent = createFilterWrapper(eventFilter ?? throttleFilter(50), () => {
+      if (eventGeneration === generation && isPending.value)
+        reset(true)
+    })
     isPending.value = true
     if (!initialState)
       reset()

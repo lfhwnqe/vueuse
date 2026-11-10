@@ -93,6 +93,31 @@ describe('useIdle', () => {
     expect(idle.value).toBe(false)
   })
 
+  it('ignores filtered activity from before stop, even after restart', () => {
+    const pending: Array<() => void> = []
+    const { idle, lastActive, start, stop } = useIdle(100, {
+      events: ['click'],
+      eventFilter: (invoke) => { pending.push(invoke) },
+    })
+    const initialLastActive = lastActive.value
+
+    window.dispatchEvent(new Event('click'))
+    expect(pending).toHaveLength(1)
+    stop()
+    start()
+    vi.advanceTimersByTime(100)
+    expect(idle.value).toBe(true)
+
+    pending[0]()
+    expect(idle.value).toBe(true)
+    expect(lastActive.value).toBe(initialLastActive)
+
+    window.dispatchEvent(new Event('click'))
+    pending[1]()
+    expect(idle.value).toBe(false)
+    stop()
+  })
+
   it('should respect initialState option', () => {
     const { idle } = useIdle(1000, { initialState: true })
     expect(idle.value).toBe(true)
